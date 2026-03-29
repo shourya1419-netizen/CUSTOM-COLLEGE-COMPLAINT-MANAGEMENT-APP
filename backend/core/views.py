@@ -4,9 +4,8 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .serializers import UserSerializer , ComplaintSerializer
+from .serializers import UserSerializer , ComplaintSerializer , RegisterSerializer
 from .models import Complaint
-
 
 
 @api_view(['GET'])
@@ -24,6 +23,16 @@ def profile(request):
     serializer = UserSerializer(request.user)
     return Response(serializer.data)
 
+
+@api_view(['POST'])
+def register(request):
+    serializer = RegisterSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"message": "User registered successfully"})
+
+    return Response(serializer.errors)
 
 
 
@@ -50,3 +59,28 @@ def list_complaints(request):
 
     serializer = ComplaintSerializer(complaints, many=True)
     return Response(serializer.data)
+
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_complaint_status(request, id):
+
+    # Only staff or admin allowed
+    if request.user.role not in ['STAFF', 'ADMIN']:
+        return Response({"error": "Not allowed"}, status=403)
+
+    try:
+        complaint = Complaint.objects.get(id=id)
+    except Complaint.DoesNotExist:
+        return Response({"error": "Complaint not found"}, status=404)
+
+    new_status = request.data.get('status')
+
+    if new_status not in ['Pending', 'In Progress', 'Resolved']:
+        return Response({"error": "Invalid status"}, status=400)
+
+    complaint.status = new_status
+    complaint.save()
+
+    return Response({"message": "Status updated successfully"})
