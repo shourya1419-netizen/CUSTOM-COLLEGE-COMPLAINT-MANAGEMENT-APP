@@ -52,3 +52,12 @@ class Complaint(models.Model):
         return self.title
 
 
+class Remark(models.Model):
+    complaint = models.ForeignKey(Complaint, on_delete=models.CASCADE, related_name='remarks')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.text[:20]

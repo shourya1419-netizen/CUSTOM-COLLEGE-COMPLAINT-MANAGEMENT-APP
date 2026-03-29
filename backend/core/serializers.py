@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User , Complaint
+from .models import User , Complaint , Remark
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,3 +26,10 @@ class ComplaintSerializer(serializers.ModelSerializer):
         model = Complaint
         fields = '__all__'
         read_only_fields = ['student', 'status']
+
+
+class RemarkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Remark
+        fields = '__all__'
+        read_only_fields = ['user' , 'complaint']

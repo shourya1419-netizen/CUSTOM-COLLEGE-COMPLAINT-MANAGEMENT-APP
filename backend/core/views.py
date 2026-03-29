@@ -4,8 +4,8 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .serializers import UserSerializer , ComplaintSerializer , RegisterSerializer
-from .models import Complaint
+from .serializers import UserSerializer , ComplaintSerializer , RegisterSerializer , RemarkSerializer
+from .models import Complaint , Remark
 
 
 @api_view(['GET'])
@@ -84,3 +84,34 @@ def update_complaint_status(request, id):
     complaint.save()
 
     return Response({"message": "Status updated successfully"})
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_remark(request, complaint_id):
+
+    if request.user.role not in ['STAFF', 'ADMIN']:
+        return Response({"error": "Not allowed"}, status=403)
+
+    try:
+        complaint = Complaint.objects.get(id=complaint_id)
+    except Complaint.DoesNotExist:
+        return Response({"error": "Complaint not found"}, status=404)
+
+    serializer = RemarkSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save(user=request.user, complaint=complaint)
+        return Response(serializer.data)
+
+    return Response(serializer.errors)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_remarks(request, complaint_id):
+
+    remarks = Remark.objects.filter(complaint_id=complaint_id)
+    serializer = RemarkSerializer(remarks, many=True)
+
+    return Response(serializer.data)
