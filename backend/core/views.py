@@ -4,8 +4,8 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .serializers import UserSerializer , ComplaintSerializer , RegisterSerializer , RemarkSerializer
-from .models import Complaint , Remark
+from .serializers import UserSerializer , ComplaintSerializer , RegisterSerializer , RemarkSerializer , AttachmentSerializer
+from .models import Complaint , Remark , Attachment
 
 
 @api_view(['GET'])
@@ -115,3 +115,22 @@ def get_remarks(request, complaint_id):
     serializer = RemarkSerializer(remarks, many=True)
 
     return Response(serializer.data)
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def upload_attachment(request, complaint_id):
+
+    try:
+        complaint = Complaint.objects.get(id=complaint_id)
+    except Complaint.DoesNotExist:
+        return Response({"error": "Complaint not found"}, status=404)
+
+    serializer = AttachmentSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save(complaint=complaint)
+        return Response(serializer.data)
+
+    return Response(serializer.errors)

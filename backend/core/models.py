@@ -61,3 +61,15 @@ class Remark(models.Model):
 
     def __str__(self):
         return self.text[:20]
+    
+
+
+class Attachment(models.Model):
+    complaint = models.ForeignKey(Complaint, on_delete=models.CASCADE, related_name='attachments')
+    
+    file = models.FileField(upload_to='attachments/')
+    
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Attachment {self.id}"

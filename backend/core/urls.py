@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import health_check, profile , create_complaint, list_complaints , update_complaint_status , register , add_remark , get_remarks
+from .views import health_check, profile , create_complaint, list_complaints , update_complaint_status , register , add_remark , get_remarks , upload_attachment
 
 
 urlpatterns = [
@@ -11,5 +11,6 @@ urlpatterns = [
     path('auth/register/', register),
     path('complaints/<int:complaint_id>/remarks/', get_remarks),
     path('complaints/<int:complaint_id>/remarks/add/', add_remark),
+    path('complaints/<int:complaint_id>/upload/', upload_attachment),
 ]
 
