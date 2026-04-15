@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import Complaint, UserProfile
 
-# Register your models here.
+admin.site.register(Complaint)
+admin.site.register(UserProfile)

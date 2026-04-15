@@ -55,13 +55,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# -------------------------------------------------------
-# DATABASE
-# Switch to PostgreSQL for production.
-# For local dev with PostgreSQL running:
-#   createdb college_complaints
-# Then set credentials below.
-# -------------------------------------------------------
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -72,14 +65,6 @@ DATABASES = {
         'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
-
-# Fallback to SQLite — uncomment below and comment out PostgreSQL above if needed
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -95,7 +80,6 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-import os
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -104,9 +88,6 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3001",
 ]
 
-# -------------------------------------------------------
-# Django REST Framework — JWT authentication
-# -------------------------------------------------------
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -116,9 +97,6 @@ REST_FRAMEWORK = {
     ),
 }
 
-# -------------------------------------------------------
-# JWT Settings
-# -------------------------------------------------------
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -127,8 +105,5 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# -------------------------------------------------------
-# Email — console backend for dev (prints to terminal)
-# -------------------------------------------------------
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'noreply@college.com'

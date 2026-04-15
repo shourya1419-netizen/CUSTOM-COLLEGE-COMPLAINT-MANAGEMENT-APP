@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
 from django.core.mail import send_mail
 from django.conf import settings as django_settings
 
@@ -51,7 +52,6 @@ class LoginView(APIView):
         username = request.data.get('username', '')
         password = request.data.get('password', '')
 
-        from django.contrib.auth import authenticate
         user = authenticate(username=username, password=password)
         if user is None:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -107,7 +107,6 @@ class UpdateStatusView(APIView):
         complaint.status = serializer.validated_data['status']
         complaint.save()
 
-        # Email notification
         if complaint.user.email:
             try:
                 send_mail(
