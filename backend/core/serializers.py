@@ -1,42 +1,61 @@
 from rest_framework import serializers
-from .models import Attachment, User , Complaint , Remark
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'email', 'role']
+from django.contrib.auth.models import User
+from .models import Complaint, UserProfile
 
 
-class RegisterSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'password', 'role']
+class RegisterSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150)
+    email = serializers.EmailField()
+    password = serializers.CharField(min_length=6, write_only=True)
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Username already taken.")
+        return value
 
     def create(self, validated_data):
-        password = validated_data.pop('password')
-        user = User(**validated_data)
-        user.set_password(password)
-        user.save()
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            password=validated_data['password'],
+        )
+        UserProfile.objects.create(user=user, role='student')
         return user
 
 
-
 class ComplaintSerializer(serializers.ModelSerializer):
+    student = serializers.CharField(source='user.username', read_only=True)
+    file = serializers.SerializerMethodField()
+
     class Meta:
         model = Complaint
-        fields = '__all__'
-        read_only_fields = ['student', 'status']
+        fields = ['id', 'title', 'description', 'category', 'department',
+                  'status', 'file', 'created_at', 'student']
+        read_only_fields = ['id', 'status', 'created_at', 'student']
+
+    def get_file(self, obj):
+        request = self.context.get('request')
+        if obj.file and request:
+            return request.build_absolute_uri(obj.file.url)
+        return None
 
 
-class RemarkSerializer(serializers.ModelSerializer):
+class ComplaintCreateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Remark
-        fields = '__all__'
-        read_only_fields = ['user' , 'complaint']
+        model = Complaint
+        fields = ['title', 'description', 'category', 'department', 'file']
 
 
-class AttachmentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Attachment
-        fields = '__all__'
-        read_only_fields = ['complaint']
+class StatusUpdateSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=Complaint.STATUS_CHOICES)
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(min_length=6, write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError("New passwords do not match.")
+        return data

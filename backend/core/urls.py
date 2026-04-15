@@ -1,16 +1,18 @@
 from django.urls import path
-from .views import health_check, profile , create_complaint, list_complaints , update_complaint_status , register , add_remark , get_remarks , upload_attachment
-
+from rest_framework_simplejwt.views import TokenRefreshView
+from .views import (
+    RegisterView, LoginView, ComplaintsView,
+    UpdateStatusView, DeleteComplaintView,
+    ChangePasswordView, AdminStatsView,
+)
 
 urlpatterns = [
-    path('health/', health_check),
-    path('profile/', profile),
-    path('complaints/', list_complaints),
-    path('complaints/create/', create_complaint),
-    path('complaints/<int:id>/status/', update_complaint_status),
-    path('auth/register/', register),
-    path('complaints/<int:complaint_id>/remarks/', get_remarks),
-    path('complaints/<int:complaint_id>/remarks/add/', add_remark),
-    path('complaints/<int:complaint_id>/upload/', upload_attachment),
+    path('register/', RegisterView.as_view()),
+    path('login/', LoginView.as_view()),
+    path('token/refresh/', TokenRefreshView.as_view()),
+    path('complaints/', ComplaintsView.as_view()),
+    path('complaints/<int:id>/status/', UpdateStatusView.as_view()),
+    path('complaints/<int:id>/delete/', DeleteComplaintView.as_view()),
+    path('change-password/', ChangePasswordView.as_view()),
+    path('admin/stats/', AdminStatsView.as_view()),
 ]
-

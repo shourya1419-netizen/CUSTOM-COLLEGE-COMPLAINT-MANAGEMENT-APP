@@ -1,136 +1,174 @@
-from django.shortcuts import render
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from django.core.mail import send_mail
+from django.conf import settings as django_settings
 
-# Create your views here.
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 from rest_framework.response import Response
-from .serializers import UserSerializer , ComplaintSerializer , RegisterSerializer , RemarkSerializer , AttachmentSerializer
-from .models import Complaint , Remark , Attachment
+from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from .models import Complaint, UserProfile
+from .serializers import (
+    RegisterSerializer, ComplaintSerializer,
+    ComplaintCreateSerializer, StatusUpdateSerializer,
+    ChangePasswordSerializer,
+)
 
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def health_check(request):
-    return Response({
-        "status": "OK",
-        "user": request.user.username,
-        "role": request.user.role
-    })
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def profile(request):
-    serializer = UserSerializer(request.user)
-    return Response(serializer.data)
-
-
-@api_view(['POST'])
-def register(request):
-    serializer = RegisterSerializer(data=request.data)
-
-    if serializer.is_valid():
-        serializer.save()
-        return Response({"message": "User registered successfully"})
-
-    return Response(serializer.errors)
-
-
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def create_complaint(request):
-    serializer = ComplaintSerializer(data=request.data)
-    
-    if serializer.is_valid():
-        serializer.save(student=request.user)
-        return Response(serializer.data)
-    
-    return Response(serializer.errors)
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def list_complaints(request):
-
-    if request.user.role == 'STUDENT':
-        complaints = Complaint.objects.filter(student=request.user)
-    else:
-        complaints = Complaint.objects.all()
-
-    serializer = ComplaintSerializer(complaints, many=True)
-    return Response(serializer.data)
-
-
-
-@api_view(['PUT'])
-@permission_classes([IsAuthenticated])
-def update_complaint_status(request, id):
-
-    # Only staff or admin allowed
-    if request.user.role not in ['STAFF', 'ADMIN']:
-        return Response({"error": "Not allowed"}, status=403)
-
+def get_role(user):
     try:
-        complaint = Complaint.objects.get(id=id)
-    except Complaint.DoesNotExist:
-        return Response({"error": "Complaint not found"}, status=404)
-
-    new_status = request.data.get('status')
-
-    if new_status not in ['Pending', 'In Progress', 'Resolved']:
-        return Response({"error": "Invalid status"}, status=400)
-
-    complaint.status = new_status
-    complaint.save()
-
-    return Response({"message": "Status updated successfully"})
+        return user.profile.role
+    except UserProfile.DoesNotExist:
+        return 'student'
 
 
+def get_tokens(user):
+    refresh = RefreshToken.for_user(user)
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def add_remark(request, complaint_id):
 
-    if request.user.role not in ['STAFF', 'ADMIN']:
-        return Response({"error": "Not allowed"}, status=403)
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
 
-    try:
-        complaint = Complaint.objects.get(id=complaint_id)
-    except Complaint.DoesNotExist:
-        return Response({"error": "Complaint not found"}, status=404)
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': 'Registered successfully'}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    serializer = RemarkSerializer(data=request.data)
 
-    if serializer.is_valid():
-        serializer.save(user=request.user, complaint=complaint)
+class LoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        username = request.data.get('username', '')
+        password = request.data.get('password', '')
+
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        tokens = get_tokens(user)
+        role = get_role(user)
+        return Response({
+            'access': tokens['access'],
+            'refresh': tokens['refresh'],
+            'username': user.username,
+            'role': role,
+        })
+
+
+class ComplaintsView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get(self, request):
+        role = get_role(request.user)
+        qs = Complaint.objects.all().order_by('-created_at') if role == 'admin' \
+            else Complaint.objects.filter(user=request.user).order_by('-created_at')
+        serializer = ComplaintSerializer(qs, many=True, context={'request': request})
         return Response(serializer.data)
 
-    return Response(serializer.errors)
+    def post(self, request):
+        if get_role(request.user) == 'admin':
+            return Response({'error': 'Admins cannot create complaints'}, status=status.HTTP_403_FORBIDDEN)
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_remarks(request, complaint_id):
-
-    remarks = Remark.objects.filter(complaint_id=complaint_id)
-    serializer = RemarkSerializer(remarks, many=True)
-
-    return Response(serializer.data)
-
+        serializer = ComplaintCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            complaint = serializer.save(user=request.user)
+            return Response({'message': 'Complaint created', 'id': complaint.id}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def upload_attachment(request, complaint_id):
+class UpdateStatusView(APIView):
+    permission_classes = [IsAuthenticated]
 
-    try:
-        complaint = Complaint.objects.get(id=complaint_id)
-    except Complaint.DoesNotExist:
-        return Response({"error": "Complaint not found"}, status=404)
+    def put(self, request, id):
+        if get_role(request.user) != 'admin':
+            return Response({'error': 'Only admins can update status'}, status=status.HTTP_403_FORBIDDEN)
 
-    serializer = AttachmentSerializer(data=request.data)
+        try:
+            complaint = Complaint.objects.get(id=id)
+        except Complaint.DoesNotExist:
+            return Response({'error': 'Complaint not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    if serializer.is_valid():
-        serializer.save(complaint=complaint)
-        return Response(serializer.data)
+        serializer = StatusUpdateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    return Response(serializer.errors)
+        complaint.status = serializer.validated_data['status']
+        complaint.save()
+
+        if complaint.user.email:
+            try:
+                send_mail(
+                    subject=f'Complaint Status Updated — {complaint.title}',
+                    message=(
+                        f'Hi {complaint.user.username},\n\n'
+                        f'Your complaint "{complaint.title}" status has been updated to: '
+                        f'{complaint.status.replace("_", " ").title()}\n\n'
+                        f'— College Complaint System'
+                    ),
+                    from_email=django_settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[complaint.user.email],
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
+
+        return Response({'message': 'Status updated', 'status': complaint.status})
+
+
+class DeleteComplaintView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, id):
+        if get_role(request.user) != 'student':
+            return Response({'error': 'Only students can delete complaints'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            complaint = Complaint.objects.get(id=id, user=request.user)
+            complaint.delete()
+            return Response({'message': 'Complaint deleted'})
+        except Complaint.DoesNotExist:
+            return Response({'error': 'Complaint not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        if not request.user.check_password(serializer.validated_data['current_password']):
+            return Response({'error': 'Current password is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+
+        request.user.set_password(serializer.validated_data['new_password'])
+        request.user.save()
+        return Response({'message': 'Password changed successfully'})
+
+
+class AdminStatsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if get_role(request.user) != 'admin':
+            return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        return Response({
+            'total': Complaint.objects.count(),
+            'pending': Complaint.objects.filter(status='pending').count(),
+            'in_progress': Complaint.objects.filter(status='in_progress').count(),
+            'resolved': Complaint.objects.filter(status='resolved').count(),
+            'closed': Complaint.objects.filter(status='closed').count(),
+        })
