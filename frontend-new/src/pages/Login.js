@@ -33,89 +33,47 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-400 via-teal-400 to-cyan-300">
-      <div className="bg-white rounded-3xl shadow-2xl w-96 p-8">
-
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mb-3 shadow-lg">
-            <span className="text-white text-3xl">🎓</span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-800">University Portal</h1>
-          <p className="text-gray-400 text-sm mt-1">Complaint Management System</p>
-          <div className="flex items-center gap-1 mt-2 text-blue-500 text-xs">
-            <span>🔒</span>
-            <span>Secure Authentication</span>
-          </div>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-600">
+      <div className="bg-white p-8 rounded-2xl shadow-lg w-96">
+        <h2 className="text-2xl font-bold text-center mb-6">Login</h2>
 
         {error && (
-          <div className="bg-red-50 text-red-500 text-sm px-4 py-2 rounded-xl mb-4 border border-red-100">
+          <div className="bg-red-100 text-red-600 text-sm px-4 py-2 rounded-lg mb-4">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
-              <span>✉️</span> Username
-            </label>
-            <input
-              type="text"
-              name="username"
-              placeholder="Enter your username"
-              required
-              onChange={handleChange}
-              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
-              <span>🔒</span> Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              required
-              onChange={handleChange}
-              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition"
-            />
-          </div>
-
+          <input
+            type="text"
+            name="username"
+            placeholder="Username"
+            required
+            className="w-full mb-4 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            onChange={handleChange}
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+            className="w-full mb-4 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            onChange={handleChange}
+          />
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-60 flex items-center justify-center gap-2 mt-2"
+            className="w-full bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 transition disabled:opacity-60"
           >
-            {loading ? "Logging in..." : <>Login to Portal <span>→</span></>}
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
-        <div className="flex items-center gap-2 my-4">
-          <div className="flex-1 h-px bg-gray-200" />
-          <span className="text-xs text-gray-400">or</span>
-          <div className="flex-1 h-px bg-gray-200" />
-        </div>
-
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center mt-4 text-sm">
           Don't have an account?{" "}
-          <span
-            className="text-blue-500 font-semibold cursor-pointer hover:underline"
-            onClick={() => navigate("/register")}
-          >
-            Register here
+          <span className="text-indigo-600 cursor-pointer" onClick={() => navigate("/register")}>
+            Register
           </span>
-        </p>
-
-        <div className="mt-4 bg-blue-50 rounded-xl p-3 text-center">
-          <p className="text-xs text-blue-500 font-medium">Students register themselves</p>
-          <p className="text-xs text-gray-400">Admins are created by the system manager</p>
-        </div>
-
-        <p className="text-center text-xs text-gray-400 mt-4 flex items-center justify-center gap-1">
-          <span>🔒</span> Your data is secure and encrypted
         </p>
       </div>
     </div>
