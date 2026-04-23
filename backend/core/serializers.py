@@ -42,13 +42,12 @@ class CommentSerializer(serializers.ModelSerializer):
 class ComplaintSerializer(serializers.ModelSerializer):
     student = serializers.CharField(source='user.username', read_only=True)
     file = serializers.SerializerMethodField()
-    comment_count = serializers.IntegerField(source='comments.count', read_only=True)
 
     class Meta:
         model = Complaint
         fields = ['id', 'title', 'description', 'category', 'department',
-                  'status', 'file', 'created_at', 'student', 'comment_count']
-        read_only_fields = ['id', 'status', 'created_at', 'student', 'comment_count']
+                  'status', 'file', 'created_at', 'student']
+        read_only_fields = ['id', 'status', 'created_at', 'student']
 
     def get_file(self, obj):
         request = self.context.get('request')
