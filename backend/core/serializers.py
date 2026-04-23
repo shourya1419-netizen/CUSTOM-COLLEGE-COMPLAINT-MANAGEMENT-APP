@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Complaint, UserProfile
+from .models import Complaint, UserProfile, Comment
 
 
 class RegisterSerializer(serializers.Serializer):
@@ -23,21 +23,45 @@ class RegisterSerializer(serializers.Serializer):
         return user
 
 
+class CommentSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    role = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'username', 'role', 'text', 'created_at']
+        read_only_fields = ['id', 'username', 'role', 'created_at']
+
+    def get_role(self, obj):
+        try:
+            return obj.user.profile.role
+        except Exception:
+            return 'student'
+
+
 class ComplaintSerializer(serializers.ModelSerializer):
     student = serializers.CharField(source='user.username', read_only=True)
     file = serializers.SerializerMethodField()
+    comment_count = serializers.IntegerField(source='comments.count', read_only=True)
 
     class Meta:
         model = Complaint
         fields = ['id', 'title', 'description', 'category', 'department',
-                  'status', 'file', 'created_at', 'student']
-        read_only_fields = ['id', 'status', 'created_at', 'student']
+                  'status', 'file', 'created_at', 'student', 'comment_count']
+        read_only_fields = ['id', 'status', 'created_at', 'student', 'comment_count']
 
     def get_file(self, obj):
         request = self.context.get('request')
         if obj.file and request:
             return request.build_absolute_uri(obj.file.url)
         return None
+
+
+class ComplaintDetailSerializer(ComplaintSerializer):
+    comments = CommentSerializer(many=True, read_only=True)
+
+    class Meta(ComplaintSerializer.Meta):
+        fields = ComplaintSerializer.Meta.fields + ['comments']
 
 
 class ComplaintCreateSerializer(serializers.ModelSerializer):
