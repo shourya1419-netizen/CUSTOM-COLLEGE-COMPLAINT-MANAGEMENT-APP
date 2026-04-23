@@ -6,6 +6,7 @@ import CreateComplaint from "./pages/CreateComplaint";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 import ChangePassword from "./pages/ChangePassword";
+import StatusPage from "./pages/StatusPage";
 
 function PrivateRoute({ children, requiredRole }) {
   const token = localStorage.getItem("token");
@@ -31,6 +32,9 @@ function App() {
         } />
         <Route path="/change-password" element={
           <PrivateRoute requiredRole="student"><ChangePassword /></PrivateRoute>
+        } />
+        <Route path="/status" element={
+          <PrivateRoute requiredRole="student"><StatusPage /></PrivateRoute>
         } />
         <Route path="/admin" element={
           <PrivateRoute requiredRole="admin"><AdminDashboard /></PrivateRoute>
