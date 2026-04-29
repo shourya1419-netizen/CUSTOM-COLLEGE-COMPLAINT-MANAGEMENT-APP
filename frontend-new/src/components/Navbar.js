@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, PlusCircle, KeyRound, Menu, X } from "lucide-react";
+import { LayoutDashboard, PlusCircle, KeyRound, Menu, X, ClipboardList } from "lucide-react";
 
 function Navbar({ darkMode, setDarkMode }) {
   const location = useLocation();
@@ -57,6 +57,16 @@ function Navbar({ darkMode, setDarkMode }) {
           onClick={() => { navigate("/change-password"); setMobileOpen(false); }}
         >
           <KeyRound size={20} /> Change Password
+        </li>
+        <li
+          className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer ${
+            location.pathname === "/status"
+              ? "bg-indigo-100 text-indigo-600"
+              : "text-gray-700 dark:text-gray-300 hover:text-indigo-600"
+          }`}
+          onClick={() => { navigate("/status"); setMobileOpen(false); }}
+        >
+          <ClipboardList size={20} /> Track Status
         </li>
       </ul>
     </>

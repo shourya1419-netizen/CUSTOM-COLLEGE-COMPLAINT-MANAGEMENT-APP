@@ -46,21 +46,22 @@ function AdminDashboard() {
     try {
       const res = await API.get("/complaints/");
       setComplaints(res.data);
-    } catch (err) {
-      console.log(err);
+    } catch {
+      setNotification("Failed to load complaints. Please refresh.");
     } finally {
       setLoading(false);
     }
   };
 
-  const updateStatus = async (id, status) => {
+  const updateStatus = async (id, newStatus) => {
     try {
-      await API.put(`/complaints/${id}/status/`, { status });
-      setNotification("Status updated");
+      await API.put(`/complaints/${id}/status/`, { status: newStatus });
+      setNotification("Status updated successfully");
       setTimeout(() => setNotification(""), 3000);
       fetchComplaints();
-    } catch (err) {
-      console.log(err);
+    } catch {
+      setNotification("Failed to update status. Try again.");
+      setTimeout(() => setNotification(""), 3000);
     }
   };
 

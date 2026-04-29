@@ -4,6 +4,7 @@ from .views import (
     RegisterView, LoginView, ComplaintsView,
     UpdateStatusView, DeleteComplaintView,
     ChangePasswordView, AdminStatsView,
+    CommentsView,
 )
 
 urlpatterns = [
@@ -13,6 +14,7 @@ urlpatterns = [
     path('complaints/', ComplaintsView.as_view()),
     path('complaints/<int:id>/status/', UpdateStatusView.as_view()),
     path('complaints/<int:id>/delete/', DeleteComplaintView.as_view()),
+    path('complaints/<int:id>/comments/', CommentsView.as_view()),
     path('change-password/', ChangePasswordView.as_view()),
-    path('admin/stats/', AdminStatsView.as_view()),
+    path('stats/', AdminStatsView.as_view()),
 ]

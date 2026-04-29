@@ -2,28 +2,27 @@ import { useState, useEffect } from "react";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
 import { motion } from "framer-motion";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { LayoutDashboard, Wifi, Droplet, Fan, Trash2 } from "lucide-react";
 
 function Dashboard() {
   const [complaints, setComplaints] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
 
-  useEffect(() => {
-    fetchComplaints();
-  }, []);
+  useEffect(() => { fetchComplaints(); }, []);
 
   const fetchComplaints = async () => {
     setLoading(true);
+    setError("");
     try {
       const res = await API.get("/complaints/");
       setComplaints(res.data);
-    } catch (err) {
-      console.log(err);
+    } catch {
+      setError("Failed to load complaints. Please refresh.");
     } finally {
       setLoading(false);
     }
@@ -32,26 +31,29 @@ function Dashboard() {
   const deleteComplaint = async (id) => {
     if (!window.confirm("Are you sure you want to delete this complaint?")) return;
     setDeletingId(id);
+    setDeleteError("");
     try {
       await API.delete(`/complaints/${id}/delete/`);
       setComplaints((prev) => prev.filter((c) => c.id !== id));
-    } catch (err) {
-      console.log(err);
+    } catch {
+      setDeleteError("Failed to delete complaint. Try again.");
     } finally {
       setDeletingId(null);
     }
   };
 
-  const getStatusColor = (status) => {
-    if (status === "pending") return "bg-yellow-100 text-yellow-700";
-    if (status === "resolved") return "bg-green-100 text-green-700";
+  const getStatusColor = (s) => {
+    if (s === "pending") return "bg-yellow-100 text-yellow-700";
+    if (s === "resolved") return "bg-green-100 text-green-700";
+    if (s === "closed") return "bg-gray-100 text-gray-600";
     return "bg-blue-100 text-blue-700";
   };
 
   const getIcon = (title) => {
-    if (title.toLowerCase().includes("water")) return <Droplet size={20} />;
-    if (title.toLowerCase().includes("wifi")) return <Wifi size={20} />;
-    if (title.toLowerCase().includes("fan")) return <Fan size={20} />;
+    const t = title.toLowerCase();
+    if (t.includes("water")) return <Droplet size={20} />;
+    if (t.includes("wifi")) return <Wifi size={20} />;
+    if (t.includes("fan")) return <Fan size={20} />;
     return <LayoutDashboard size={20} />;
   };
 
@@ -65,11 +67,20 @@ function Dashboard() {
   return (
     <div className={darkMode ? "dark" : ""}>
       <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900 text-black dark:text-white">
-
         <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
 
         <div className="flex-1 p-6 pt-20 md:pt-8">
           <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+
+          {error && (
+            <div className="bg-red-100 text-red-600 px-4 py-3 rounded-lg mb-4 flex justify-between items-center">
+              <span>{error}</span>
+              <button onClick={fetchComplaints} className="text-sm underline ml-4">Retry</button>
+            </div>
+          )}
+          {deleteError && (
+            <div className="bg-red-100 text-red-600 px-4 py-3 rounded-lg mb-4">{deleteError}</div>
+          )}
 
           <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow mb-6">
             <h2 className="text-lg font-semibold mb-4">Complaint Stats</h2>
@@ -89,7 +100,7 @@ function Dashboard() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {complaints.length === 0 && (
+              {complaints.length === 0 && !error && (
                 <p className="text-gray-500 col-span-3">No complaints yet. Create one!</p>
               )}
               {complaints.map((c) => (
@@ -99,7 +110,7 @@ function Dashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.3 }}
-                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 transition"
+                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5"
                 >
                   <div className="flex items-center gap-2 mb-2 text-indigo-600">
                     {getIcon(c.title)}
@@ -117,8 +128,14 @@ function Dashboard() {
                   <p className="text-gray-600 dark:text-gray-300 mb-3 text-sm">{c.description}</p>
 
                   <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(c.status)}`}>
-                    {c.status}
+                    {c.status.replace("_", " ")}
                   </span>
+
+                  {c.category && (
+                    <span className="ml-2 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-500 capitalize">
+                      {c.category}
+                    </span>
+                  )}
 
                   {c.file && (
                     <p className="text-sm text-gray-500 mt-3">
