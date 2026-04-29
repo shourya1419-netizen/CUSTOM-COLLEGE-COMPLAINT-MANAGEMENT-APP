@@ -4,7 +4,7 @@ from .views import (
     RegisterView, LoginView, ComplaintsView,
     UpdateStatusView, DeleteComplaintView,
     ChangePasswordView, AdminStatsView,
-    CommentsView,
+    CommentsView, NotificationsView,
 )
 
 urlpatterns = [
@@ -17,4 +17,5 @@ urlpatterns = [
     path('complaints/<int:id>/comments/', CommentsView.as_view()),
     path('change-password/', ChangePasswordView.as_view()),
     path('stats/', AdminStatsView.as_view()),
+    path('notifications/', NotificationsView.as_view()),
 ]

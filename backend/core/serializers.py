@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Complaint, UserProfile, Comment
+from .models import Complaint, UserProfile, Comment, Notification
 
 
 class RegisterSerializer(serializers.Serializer):
@@ -83,3 +83,11 @@ class ChangePasswordSerializer(serializers.Serializer):
         if data['new_password'] != confirm:
             raise serializers.ValidationError("New passwords do not match.")
         return data
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    complaint_title = serializers.CharField(source='complaint.title', read_only=True)
+
+    class Meta:
+        model = Notification
+        fields = ['id', 'message', 'is_read', 'created_at', 'complaint_title']
