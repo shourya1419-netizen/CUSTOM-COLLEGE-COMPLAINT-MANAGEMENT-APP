@@ -78,11 +78,31 @@ function AdminDashboard() {
   ];
 
   const sidebar = (
-    <div className="flex flex-col justify-between h-full">
+    <div className="flex flex-col h-full">
       <div>
-        <h2 className="text-2xl font-bold text-red-600 mb-2">Admin Panel</h2>
-        <p className="text-xs text-gray-400 mb-8">College Complaint System</p>
-        <div className="flex items-center gap-3 mb-8">
+        {/* Top: title + actions */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-red-600">Admin Panel</h2>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+              title={darkMode ? "Light Mode" : "Dark Mode"}
+            >
+              {darkMode ? <span className="text-yellow-400 text-sm">☀️</span> : <span className="text-gray-500 text-sm">🌙</span>}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+              title="Logout"
+            >
+              <LogOut size={18} className="text-red-500" />
+            </button>
+          </div>
+        </div>
+
+        <p className="text-xs text-gray-400 mb-6">College Complaint System</p>
+        <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 bg-red-500 text-white flex items-center justify-center rounded-full font-bold">
             {username.charAt(0).toUpperCase()}
           </div>
@@ -91,30 +111,17 @@ function AdminDashboard() {
             <p className="text-xs text-red-500 font-medium">Administrator</p>
           </div>
         </div>
-        <ul className="space-y-4">
+        <ul className="space-y-2">
           <li className="flex items-center gap-3 p-2 rounded-lg bg-red-50 text-red-600 cursor-pointer">
             <LayoutDashboard size={20} /> Dashboard
           </li>
-          <li className="flex items-center gap-3 p-2 rounded-lg text-gray-600 dark:text-gray-300 cursor-pointer hover:text-red-600"
+          <li
+            className="flex items-center gap-3 p-2 rounded-lg text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition"
             onClick={() => document.getElementById('complaints-table').scrollIntoView({ behavior: 'smooth' })}
           >
             <Users size={20} /> All Complaints ({complaints.length})
           </li>
         </ul>
-      </div>
-      <div className="flex flex-col gap-3">
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className="w-full bg-gray-200 dark:bg-gray-700 px-3 py-2 rounded text-sm"
-        >
-          {darkMode ? "Light Mode ☀️" : "Dark Mode 🌙"}
-        </button>
-        <button
-          onClick={handleLogout}
-          className="flex items-center justify-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 w-full"
-        >
-          <LogOut size={16} /> Logout
-        </button>
       </div>
     </div>
   );
@@ -126,9 +133,17 @@ function AdminDashboard() {
         {/* Mobile top bar */}
         <div className="md:hidden flex items-center justify-between p-4 bg-white dark:bg-gray-800 shadow z-20 w-full fixed top-0 left-0">
           <h1 className="text-lg font-bold text-red-600">Admin Panel</h1>
-          <button onClick={() => setMobileOpen(!mobileOpen)}>
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+              {darkMode ? <span className="text-yellow-400">☀️</span> : <span className="text-gray-500">🌙</span>}
+            </button>
+            <button onClick={handleLogout} className="p-2 rounded-full hover:bg-red-50 transition">
+              <LogOut size={20} className="text-red-500" />
+            </button>
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2">
+              {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile drawer */}
@@ -144,7 +159,7 @@ function AdminDashboard() {
         )}
 
         {/* Desktop sidebar */}
-        <div className="hidden md:flex w-64 bg-white dark:bg-gray-800 shadow-lg p-6">
+        <div className="hidden md:flex w-64 bg-white dark:bg-gray-800 shadow-lg p-6 h-screen sticky top-0">
           {sidebar}
         </div>
 
