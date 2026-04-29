@@ -158,14 +158,42 @@ function AdminDashboard() {
 
           {/* Stats */}
           <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow mb-6">
-            <h2 className="text-lg font-semibold mb-4">Complaint Overview</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Complaint Overview</h2>
+              {filters.status && (
+                <button
+                  onClick={() => setFilters({ ...filters, status: "" })}
+                  className="text-xs text-red-500 hover:underline"
+                >
+                  Clear filter ✕
+                </button>
+              )}
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-              {chartData.map((d) => (
-                <div key={d.name} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold text-indigo-600">{d.value}</p>
-                  <p className="text-sm text-gray-500">{d.name}</p>
-                </div>
-              ))}
+              {[
+                { label: "Pending", key: "pending", value: chartData[0].value, color: "text-yellow-500", active: "bg-yellow-50 border-2 border-yellow-400", inactive: "bg-gray-50 dark:bg-gray-700 border-2 border-transparent" },
+                { label: "In Progress", key: "in_progress", value: chartData[1].value, color: "text-blue-500", active: "bg-blue-50 border-2 border-blue-400", inactive: "bg-gray-50 dark:bg-gray-700 border-2 border-transparent" },
+                { label: "Resolved", key: "resolved", value: chartData[2].value, color: "text-green-500", active: "bg-green-50 border-2 border-green-400", inactive: "bg-gray-50 dark:bg-gray-700 border-2 border-transparent" },
+                { label: "Closed", key: "closed", value: chartData[3].value, color: "text-gray-500", active: "bg-gray-100 border-2 border-gray-400", inactive: "bg-gray-50 dark:bg-gray-700 border-2 border-transparent" },
+              ].map((d) => {
+                const isActive = filters.status === d.key;
+                return (
+                  <motion.button
+                    key={d.key}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => {
+                      setFilters({ ...filters, status: isActive ? "" : d.key });
+                      document.getElementById("complaints-table").scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className={`rounded-xl p-4 text-center cursor-pointer transition-all ${isActive ? d.active : d.inactive}`}
+                  >
+                    <p className={`text-2xl font-bold ${d.color}`}>{d.value}</p>
+                    <p className="text-sm text-gray-500 mt-1">{d.label}</p>
+                    {isActive && <p className="text-xs text-gray-400 mt-1">Filtering ✓</p>}
+                  </motion.button>
+                );
+              })}
             </div>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={chartData}>
@@ -186,6 +214,7 @@ function AdminDashboard() {
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
             />
             <select
+              value={filters.status}
               className="p-2 border rounded-lg text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600"
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
             >
