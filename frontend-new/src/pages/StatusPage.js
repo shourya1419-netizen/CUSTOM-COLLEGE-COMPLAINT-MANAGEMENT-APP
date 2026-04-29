@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
+import Navbar from "../components/Navbar";
 
 const STATUS_CONFIG = {
   pending:     { color: "bg-orange-400", text: "text-orange-500", bg: "bg-orange-50",  border: "border-orange-100", icon: "🕐", progress: 20,  label: "Pending" },
@@ -14,6 +15,7 @@ function StatusPage() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     const fetchComplaints = async () => {

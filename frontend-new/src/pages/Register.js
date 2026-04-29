@@ -21,7 +21,20 @@ function Register() {
       await API.post("/register/", form);
       navigate("/");
     } catch (err) {
-      const msg = err.response?.data?.error || "Registration failed. Try again.";
+      const data = err.response?.data;
+      let msg = "Registration failed. Try again.";
+      if (data) {
+        if (data.error) {
+          msg = data.error;
+        } else {
+          // field-level errors e.g. { username: ["already taken"] }
+          const firstKey = Object.keys(data)[0];
+          if (firstKey) {
+            const val = data[firstKey];
+            msg = Array.isArray(val) ? val[0] : String(val);
+          }
+        }
+      }
       setError(msg);
     } finally {
       setLoading(false);
