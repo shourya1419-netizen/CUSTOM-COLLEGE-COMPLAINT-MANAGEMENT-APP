@@ -11,12 +11,16 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Complaint, UserProfile
+from .models import Complaint, UserProfile, Comment, Notification
 from .serializers import (
     RegisterSerializer, ComplaintSerializer,
     ComplaintCreateSerializer, StatusUpdateSerializer,
-    ChangePasswordSerializer,
+    ChangePasswordSerializer, CommentSerializer,
+    NotificationSerializer,
 )
+
+ALLOWED_FILE_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg']
+MAX_FILE_SIZE_MB = 5
 
 
 def get_role(user):
@@ -49,10 +53,15 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        username = request.data.get('username', '')
+        email = request.data.get('email', '').strip().lower()
         password = request.data.get('password', '')
 
-        user = authenticate(username=username, password=password)
+        try:
+            user_obj = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        user = authenticate(username=user_obj.username, password=password)
         if user is None:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -81,6 +90,13 @@ class ComplaintsView(APIView):
         if get_role(request.user) == 'admin':
             return Response({'error': 'Admins cannot create complaints'}, status=status.HTTP_403_FORBIDDEN)
 
+        uploaded_file = request.FILES.get('file')
+        if uploaded_file:
+            if uploaded_file.content_type not in ALLOWED_FILE_TYPES:
+                return Response({'error': 'Only PDF, JPG, and PNG files are allowed.'}, status=status.HTTP_400_BAD_REQUEST)
+            if uploaded_file.size > MAX_FILE_SIZE_MB * 1024 * 1024:
+                return Response({'error': f'File size must be under {MAX_FILE_SIZE_MB}MB.'}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = ComplaintCreateSerializer(data=request.data)
         if serializer.is_valid():
             complaint = serializer.save(user=request.user)
@@ -107,6 +123,14 @@ class UpdateStatusView(APIView):
         complaint.status = serializer.validated_data['status']
         complaint.save()
 
+        # Create in-app notification for the student
+        status_label = complaint.status.replace("_", " ").title()
+        Notification.objects.create(
+            user=complaint.user,
+            complaint=complaint,
+            message=f'Your complaint "{complaint.title}" has been updated to {status_label}.'
+        )
+
         if complaint.user.email:
             try:
                 send_mail(
@@ -114,7 +138,7 @@ class UpdateStatusView(APIView):
                     message=(
                         f'Hi {complaint.user.username},\n\n'
                         f'Your complaint "{complaint.title}" status has been updated to: '
-                        f'{complaint.status.replace("_", " ").title()}\n\n'
+                        f'{status_label}\n\n'
                         f'— College Complaint System'
                     ),
                     from_email=django_settings.DEFAULT_FROM_EMAIL,
@@ -133,7 +157,6 @@ class DeleteComplaintView(APIView):
     def delete(self, request, id):
         if get_role(request.user) != 'student':
             return Response({'error': 'Only students can delete complaints'}, status=status.HTTP_403_FORBIDDEN)
-
         try:
             complaint = Complaint.objects.get(id=id, user=request.user)
             complaint.delete()
@@ -149,10 +172,8 @@ class ChangePasswordView(APIView):
         serializer = ChangePasswordSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
         if not request.user.check_password(serializer.validated_data['current_password']):
             return Response({'error': 'Current password is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
-
         request.user.set_password(serializer.validated_data['new_password'])
         request.user.save()
         return Response({'message': 'Password changed successfully'})
@@ -164,7 +185,6 @@ class AdminStatsView(APIView):
     def get(self, request):
         if get_role(request.user) != 'admin':
             return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-
         return Response({
             'total': Complaint.objects.count(),
             'pending': Complaint.objects.filter(status='pending').count(),
@@ -172,3 +192,45 @@ class AdminStatsView(APIView):
             'resolved': Complaint.objects.filter(status='resolved').count(),
             'closed': Complaint.objects.filter(status='closed').count(),
         })
+
+
+class CommentsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id):
+        try:
+            complaint = Complaint.objects.get(id=id)
+        except Complaint.DoesNotExist:
+            return Response({'error': 'Complaint not found'}, status=status.HTTP_404_NOT_FOUND)
+        if get_role(request.user) == 'student' and complaint.user != request.user:
+            return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+        comments = complaint.comments.all().order_by('created_at')
+        return Response(CommentSerializer(comments, many=True).data)
+
+    def post(self, request, id):
+        try:
+            complaint = Complaint.objects.get(id=id)
+        except Complaint.DoesNotExist:
+            return Response({'error': 'Complaint not found'}, status=status.HTTP_404_NOT_FOUND)
+        if get_role(request.user) == 'student' and complaint.user != request.user:
+            return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+        text = request.data.get('text', '').strip()
+        if not text:
+            return Response({'error': 'Comment text is required'}, status=status.HTTP_400_BAD_REQUEST)
+        comment = Comment.objects.create(complaint=complaint, user=request.user, text=text)
+        return Response(CommentSerializer(comment).data, status=status.HTTP_201_CREATED)
+
+
+class NotificationsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        notifications = Notification.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:20]
+        return Response(NotificationSerializer(notifications, many=True).data)
+
+    def patch(self, request):
+        # Mark all as read
+        Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        return Response({'message': 'All notifications marked as read'})

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Complaint, UserProfile, Comment
+from .models import Complaint, UserProfile, Comment, Notification
 
 
 class RegisterSerializer(serializers.Serializer):
@@ -8,10 +8,10 @@ class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(min_length=6, write_only=True)
 
-    def validate_username(self, value):
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("Username already taken.")
-        return value
+    def validate_email(self, value):
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("An account with this email already exists.")
+        return value.lower()
 
     def create(self, validated_data):
         user = User.objects.create_user(
@@ -76,9 +76,18 @@ class StatusUpdateSerializer(serializers.Serializer):
 class ChangePasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(write_only=True)
     new_password = serializers.CharField(min_length=6, write_only=True)
-    confirm_password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     def validate(self, data):
-        if data['new_password'] != data['confirm_password']:
+        confirm = data.get('confirm_password', data['new_password'])
+        if data['new_password'] != confirm:
             raise serializers.ValidationError("New passwords do not match.")
         return data
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    complaint_title = serializers.CharField(source='complaint.title', read_only=True)
+
+    class Meta:
+        model = Notification
+        fields = ['id', 'message', 'is_read', 'created_at', 'complaint_title']
