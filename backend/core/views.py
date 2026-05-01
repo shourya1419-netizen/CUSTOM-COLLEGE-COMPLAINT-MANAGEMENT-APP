@@ -53,11 +53,18 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        username = request.data.get('username', '')
+        email = request.data.get('email', '').strip().lower()
         password = request.data.get('password', '')
-        user = authenticate(username=username, password=password)
+
+        try:
+            user_obj = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        user = authenticate(username=user_obj.username, password=password)
         if user is None:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
         tokens = get_tokens(user)
         role = get_role(user)
         return Response({
