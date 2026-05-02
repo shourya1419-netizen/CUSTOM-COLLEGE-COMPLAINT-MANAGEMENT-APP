@@ -1,44 +1,35 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from core.models import UserProfile
 
+ADMIN_USERNAME = "vishal"
+ADMIN_EMAIL = "vishal@gmail.com"
+ADMIN_PASSWORD = "123456"
+
 
 class Command(BaseCommand):
-    help = "Create an admin user for the College Complaint System"
-
-    def add_arguments(self, parser):
-        parser.add_argument("--username", required=True, help="Admin username")
-        parser.add_argument("--password", required=True, help="Admin password")
-        parser.add_argument("--email", required=True, help="Admin email")
+    help = "Create the default superuser account if it does not already exist"
 
     def handle(self, *args, **options):
-        username = options["username"].strip()
-        password = options["password"].strip()
-        email = options["email"].strip()
+        if User.objects.filter(username=ADMIN_USERNAME).exists():
+            self.stdout.write(
+                self.style.WARNING(
+                    f"Admin user '{ADMIN_USERNAME}' already exists — skipping creation."
+                )
+            )
+            return
 
-        if not username or not password:
-            raise CommandError("Username and password cannot be empty.")
-
-        if len(password) < 6:
-            raise CommandError("Password must be at least 6 characters.")
-
-        if not email:
-            raise CommandError("Email is required for admin accounts.")
-
-        if User.objects.filter(email__iexact=email).exists():
-            raise CommandError(f"An account with email '{email}' already exists.")
-
-        if User.objects.filter(username=username).exists():
-            raise CommandError(f"User '{username}' already exists.")
-
-        user = User.objects.create_user(
-            username=username,
-            password=password,
-            email=email,
-            is_staff=True,
+        user = User.objects.create_superuser(
+            username=ADMIN_USERNAME,
+            email=ADMIN_EMAIL,
+            password=ADMIN_PASSWORD,
         )
-        UserProfile.objects.create(user=user, role="admin")
 
-        self.stdout.write(self.style.SUCCESS(
-            f"Admin '{username}' created successfully."
-        ))
+        # Create the UserProfile with admin role if it doesn't exist yet
+        UserProfile.objects.get_or_create(user=user, defaults={"role": "admin"})
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Superuser '{ADMIN_USERNAME}' ({ADMIN_EMAIL}) created successfully."
+            )
+        )
