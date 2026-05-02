@@ -105,3 +105,5 @@ SIMPLE_JWT = {
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'noreply@college.com'
+
+CORS_ALLOW_ALL_ORIGINS = True
