@@ -5,7 +5,7 @@ import Navbar from "../components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileText, AlignLeft, Tag, Building2, Paperclip, Send, CheckCircle, X } from "lucide-react";
 
-const MAX_FILE_MB = 5;
+const MAX_FILE_MB = 20;
 const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/jpg"];
 
 const CATEGORIES = [
@@ -49,12 +49,17 @@ export default function CreateComplaint() {
       if (!form.title.trim()) { setError("Title is required."); return; }
       if (!form.description.trim()) { setError("Description is required."); return; }
     }
+    if (step === 1) {
+      if (!form.category) { setError("Please select a category."); return; }
+      if (!form.department) { setError("Please select a department."); return; }
+    }
     setError("");
     setStep(s => Math.min(s + 1, 2));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    if (!form.category) { setError("Please select a category."); return; }
+    if (!form.department) { setError("Please select a department."); return; }
     setError(""); setLoading(true);
     try {
       const fd = new FormData();
@@ -153,7 +158,7 @@ export default function CreateComplaint() {
                       )}
                     </AnimatePresence>
 
-                    <form onSubmit={handleSubmit}>
+                    <form onSubmit={(e) => e.preventDefault()}>
                       <AnimatePresence mode="wait">
 
                         {/* Step 0 — Details */}
@@ -313,7 +318,7 @@ export default function CreateComplaint() {
                             Continue →
                           </motion.button>
                         ) : (
-                          <motion.button type="submit" disabled={loading} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                          <motion.button type="button" disabled={loading} onClick={handleSubmit} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                             className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold shadow-lg shadow-indigo-300/30 hover:shadow-indigo-300/50 transition disabled:opacity-60">
                             {loading
                               ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting...</>
