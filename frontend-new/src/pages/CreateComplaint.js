@@ -12,12 +12,14 @@ const CATEGORIES = [
   { value: "hostel",      label: "Hostel",       icon: "🏠", color: "from-orange-400 to-amber-400" },
   { value: "network",     label: "Network",      icon: "📶", color: "from-blue-400 to-cyan-400" },
   { value: "electricity", label: "Electricity",  icon: "⚡", color: "from-yellow-400 to-orange-400" },
+  { value: "others",      label: "Others",       icon: "📌", color: "from-gray-400 to-slate-400" },
 ];
 
 const DEPARTMENTS = [
   { value: "maintenance", label: "Maintenance", icon: "🔧" },
   { value: "it",          label: "IT",          icon: "💻" },
   { value: "admin",       label: "Admin",       icon: "🏛️" },
+  { value: "others",      label: "Others",      icon: "📌" },
 ];
 
 const STEPS = ["Details", "Category", "Attachment"];

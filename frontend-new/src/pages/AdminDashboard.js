@@ -269,8 +269,8 @@ export default function AdminDashboard() {
                 </div>
                 {[
                   { key: "status", opts: [["", "All Status"], ["pending", "Pending"], ["in_progress", "In Progress"], ["resolved", "Resolved"], ["closed", "Closed"]] },
-                  { key: "category", opts: [["", "All Categories"], ["hostel", "Hostel"], ["network", "Network"], ["electricity", "Electricity"]] },
-                  { key: "department", opts: [["", "All Depts"], ["maintenance", "Maintenance"], ["it", "IT"], ["admin", "Admin"]] },
+                  { key: "category", opts: [["", "All Categories"], ["hostel", "Hostel"], ["network", "Network"], ["electricity", "Electricity"], ["others", "Others"]] },
+                  { key: "department", opts: [["", "All Depts"], ["maintenance", "Maintenance"], ["it", "IT"], ["admin", "Admin"], ["others", "Others"]] },
                 ].map(f => (
                   <div key={f.key} className="relative">
                     <select value={filters[f.key]}
