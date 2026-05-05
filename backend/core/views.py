@@ -234,3 +234,19 @@ class NotificationsView(APIView):
         # Mark all as read
         Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
         return Response({'message': 'All notifications marked as read'})
+
+
+class AddRemarkView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, complaint_id):
+        complaint = Complaint.objects.get(id=complaint_id)
+
+        if not request.user.is_staff:
+            return Response({"error": "Only admin can add remark"}, status=403)
+
+        serializer = RemarkSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(admin=request.user, complaint=complaint)
+            return Response(serializer.data)
+        return Response(serializer.errors)

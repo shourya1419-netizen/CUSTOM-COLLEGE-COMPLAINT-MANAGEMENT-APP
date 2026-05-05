@@ -54,3 +54,17 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification for {self.user.username}: {self.message[:40]}"
+
+
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class Remark(models.Model):
+    complaint = models.ForeignKey('Complaint', on_delete=models.CASCADE, related_name='remarks')
+    admin = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Remark on {self.complaint.id}"

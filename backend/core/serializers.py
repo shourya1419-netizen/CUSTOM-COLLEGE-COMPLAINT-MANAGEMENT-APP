@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Complaint, UserProfile, Comment, Notification
+from .models import Complaint, Remark, UserProfile, Comment, Notification
 
 
 class RegisterSerializer(serializers.Serializer):
@@ -39,14 +39,22 @@ class CommentSerializer(serializers.ModelSerializer):
             return 'student'
 
 
+class RemarkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Remark
+        fields = '__all__'
+        read_only_fields = ['admin']
+
+
 class ComplaintSerializer(serializers.ModelSerializer):
     student = serializers.CharField(source='user.username', read_only=True)
     file = serializers.SerializerMethodField()
-
+    remarks = RemarkSerializer(many=True, read_only=True)
+    
     class Meta:
         model = Complaint
         fields = ['id', 'title', 'description', 'category', 'department',
-                  'status', 'file', 'created_at', 'student']
+                  'status', 'file', 'created_at', 'student', 'remarks']
         read_only_fields = ['id', 'status', 'created_at', 'student']
 
     def get_file(self, obj):
