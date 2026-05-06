@@ -41,6 +41,8 @@ export default function AdminDashboard() {
   const [toast, setToast] = useState({ msg: "", type: "" });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [filters, setFilters] = useState({ status: "", category: "", department: "", search: "" });
+  const [remarkInputs, setRemarkInputs] = useState({});
+  const [remarkLoading, setRemarkLoading] = useState({});
 
   useEffect(() => { fetchComplaints(); }, []);
 
@@ -74,6 +76,19 @@ export default function AdminDashboard() {
       showToast("Status updated successfully ✓", "success");
       fetchComplaints();
     } catch (err) { showToast(err.response?.data?.error || "Failed to update.", "error"); }
+  };
+
+  const addRemark = async (id) => {
+    const text = (remarkInputs[id] || "").trim();
+    if (!text) return;
+    setRemarkLoading(prev => ({ ...prev, [id]: true }));
+    try {
+      await API.post(`/complaints/${id}/remark/`, { text });
+      setRemarkInputs(prev => ({ ...prev, [id]: "" }));
+      showToast("Remark added ✓", "success");
+      fetchComplaints();
+    } catch (err) { showToast(err.response?.data?.error || "Failed to add remark.", "error"); }
+    finally { setRemarkLoading(prev => ({ ...prev, [id]: false })); }
   };
 
   const logout = () => { localStorage.clear(); navigate("/"); };
@@ -305,14 +320,14 @@ export default function AdminDashboard() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-gray-50/80 dark:bg-white/2">
-                        {["#", "Student", "Complaint", "Category", "Dept", "File", "Status", "Date", "Action"].map(h => (
+                        {["#", "Student", "Complaint", "Category", "Dept", "File", "Status", "Date", "Action", "Remark"].map(h => (
                           <th key={h} className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50 dark:divide-white/3">
                       {filtered.length === 0 && (
-                        <tr><td colSpan="9" className="text-center py-16 text-gray-400">
+                        <tr><td colSpan="10" className="text-center py-16 text-gray-400">
                           <div className="text-5xl mb-3">🔍</div>
                           <p className="font-medium">No complaints found</p>
                           <p className="text-xs mt-1">Try adjusting your filters</p>
@@ -377,6 +392,34 @@ export default function AdminDashboard() {
                                   <option value="closed">Closed</option>
                                 </select>
                                 <ChevronDown size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 min-w-[220px]">
+                              <div className="space-y-1.5">
+                                {c.remarks && c.remarks.length > 0 && (
+                                  <div className="space-y-1 mb-2">
+                                    {c.remarks.map(r => (
+                                      <div key={r.id} className="text-xs bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 px-2.5 py-1.5 rounded-lg border border-indigo-100 dark:border-indigo-500/20">
+                                        {r.text}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                <div className="flex gap-1.5">
+                                  <input
+                                    type="text"
+                                    placeholder="Add remark..."
+                                    value={remarkInputs[c.id] || ""}
+                                    onChange={e => setRemarkInputs(prev => ({ ...prev, [c.id]: e.target.value }))}
+                                    onKeyDown={e => e.key === "Enter" && addRemark(c.id)}
+                                    className="flex-1 px-2.5 py-1.5 text-xs border border-gray-200 dark:border-white/10 rounded-lg bg-gray-50 dark:bg-white/5 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
+                                  />
+                                  <button onClick={() => addRemark(c.id)}
+                                    disabled={remarkLoading[c.id] || !remarkInputs[c.id]?.trim()}
+                                    className="px-2.5 py-1.5 text-xs bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg disabled:opacity-40 transition font-medium">
+                                    {remarkLoading[c.id] ? "..." : "Add"}
+                                  </button>
+                                </div>
                               </div>
                             </td>
                           </motion.tr>

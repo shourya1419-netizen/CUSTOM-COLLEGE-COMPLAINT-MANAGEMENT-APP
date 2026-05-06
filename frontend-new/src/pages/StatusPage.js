@@ -144,6 +144,22 @@ function StatusPage() {
                         <p className="text-xs text-gray-500">Currently being reviewed by {c.department || "the team"}.</p>
                       </div>
                     )}
+                    {c.remarks && c.remarks.length > 0 && (
+                      <div className="mt-3 space-y-1.5">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Admin Remarks</p>
+                        {c.remarks.map(r => (
+                          <div key={r.id} className="bg-white rounded-xl px-3 py-2 flex items-start gap-2 border border-gray-100">
+                            <span className="text-indigo-400 mt-0.5">💬</span>
+                            <div>
+                              <p className="text-xs text-gray-700">{r.text}</p>
+                              <p className="text-[10px] text-gray-400 mt-0.5">
+                                {new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })

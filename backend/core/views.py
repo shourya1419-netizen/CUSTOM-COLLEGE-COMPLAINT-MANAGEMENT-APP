@@ -16,7 +16,7 @@ from .serializers import (
     RegisterSerializer, ComplaintSerializer,
     ComplaintCreateSerializer, StatusUpdateSerializer,
     ChangePasswordSerializer, CommentSerializer,
-    NotificationSerializer,
+    NotificationSerializer, RemarkSerializer,
 )
 
 ALLOWED_FILE_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg']
@@ -240,13 +240,14 @@ class AddRemarkView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, complaint_id):
-        complaint = Complaint.objects.get(id=complaint_id)
-
-        if not request.user.is_staff:
-            return Response({"error": "Only admin can add remark"}, status=403)
-
+        if get_role(request.user) != 'admin':
+            return Response({"error": "Only admin can add remark"}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            complaint = Complaint.objects.get(id=complaint_id)
+        except Complaint.DoesNotExist:
+            return Response({"error": "Complaint not found"}, status=status.HTTP_404_NOT_FOUND)
         serializer = RemarkSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(admin=request.user, complaint=complaint)
-            return Response(serializer.data)
-        return Response(serializer.errors)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
