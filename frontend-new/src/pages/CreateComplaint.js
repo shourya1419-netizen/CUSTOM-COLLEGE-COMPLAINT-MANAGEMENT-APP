@@ -27,7 +27,7 @@ const STEPS = ["Details", "Category", "Attachment"];
 export default function CreateComplaint() {
   const [form, setForm] = useState({ title: "", description: "", category: "", department: "", file: null });
   const [step, setStep] = useState(0);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);

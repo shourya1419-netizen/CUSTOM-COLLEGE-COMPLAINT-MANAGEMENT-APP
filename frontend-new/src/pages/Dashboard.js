@@ -25,7 +25,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function Dashboard() {
   const [complaints, setComplaints] = useState([]);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
@@ -33,6 +33,8 @@ export default function Dashboard() {
   const username = localStorage.getItem("username") || "Student";
 
   useEffect(() => { fetchComplaints(); }, []);
+
+  useEffect(() => { localStorage.setItem("darkMode", darkMode); }, [darkMode]);
 
   const fetchComplaints = async () => {
     setLoading(true); setError("");

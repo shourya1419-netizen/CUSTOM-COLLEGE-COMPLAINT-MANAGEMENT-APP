@@ -249,5 +249,10 @@ class AddRemarkView(APIView):
         serializer = RemarkSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(admin=request.user, complaint=complaint)
+            Notification.objects.create(
+                user=complaint.user,
+                complaint=complaint,
+                message=f'Admin added a remark on your complaint "{complaint.title}": {request.data.get("text", "")}'
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

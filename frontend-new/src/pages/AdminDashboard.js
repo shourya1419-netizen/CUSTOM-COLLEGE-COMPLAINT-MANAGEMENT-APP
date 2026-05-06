@@ -36,7 +36,7 @@ export default function AdminDashboard() {
   const username = localStorage.getItem("username") || "Admin";
   const [complaints, setComplaints] = useState([]);
   const [filtered, setFiltered] = useState([]);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ msg: "", type: "" });
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -45,6 +45,8 @@ export default function AdminDashboard() {
   const [remarkLoading, setRemarkLoading] = useState({});
 
   useEffect(() => { fetchComplaints(); }, []);
+
+  useEffect(() => { localStorage.setItem("darkMode", darkMode); }, [darkMode]);
 
   useEffect(() => {
     let data = [...complaints];
