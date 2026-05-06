@@ -40,10 +40,12 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class RemarkSerializer(serializers.ModelSerializer):
+    admin_username = serializers.CharField(source='admin.username', read_only=True)
+
     class Meta:
         model = Remark
-        fields = '__all__'
-        read_only_fields = ['admin']
+        fields = ['id', 'text', 'created_at', 'admin_username']
+        read_only_fields = ['id', 'created_at', 'admin_username']
 
 
 class ComplaintSerializer(serializers.ModelSerializer):
