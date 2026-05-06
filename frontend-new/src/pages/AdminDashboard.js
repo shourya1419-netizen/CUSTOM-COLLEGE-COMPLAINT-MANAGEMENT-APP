@@ -339,7 +339,7 @@ export default function AdminDashboard() {
                         const cfg = STATUS_CFG[c.status] || STATUS_CFG.pending;
                         return (
                           <motion.tr key={c.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
-                            className="hover:bg-gray-50/80 dark:hover:bg-white/2 transition group">
+                            className="hover:bg-gray-50/80 dark:hover:bg-white/5 transition group">
                             <td className="px-4 py-4 text-gray-300 dark:text-gray-600 text-xs font-mono">{String(i + 1).padStart(2, "0")}</td>
                             <td className="px-4 py-4">
                               <div className="flex items-center gap-2.5">
